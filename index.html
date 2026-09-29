@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>민원서비스 찾기</title>
+<meta name="description" content="서비스명 검색과 민원분야 필터로 원하는 민원 서비스를 빠르게 찾아보세요.">
+<style>
+:root{--bg:#f6f8f9;--surface:#fff;--ink:#16252e;--muted:#5a6b75;--line:#d9e1e5;--brand:#0f5a73;--brand-ink:#fff;--soft:#e3f0f4;--ok:#0b7a4b;--no:#8a4b12;--okbg:#e2f4ea;--nobg:#fbeedd}
+@media(prefers-color-scheme:dark){:root{--bg:#0f171b;--surface:#172329;--ink:#e8eff2;--muted:#9fb0b8;--line:#2b3b43;--brand:#5cc0dc;--brand-ink:#08222b;--soft:#1c3540;--ok:#7fe0ac;--no:#f0b878;--okbg:#153426;--nobg:#3a2b16}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{background:var(--brand);color:var(--brand-ink);padding:36px 0 84px}
+h1{margin:0 0 6px;font-size:clamp(1.6rem,4.5vw,2.25rem);line-height:1.25;letter-spacing:-.02em}
+header p{margin:0;opacity:.9}
+main{margin-top:-56px;padding-bottom:48px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 6px 24px rgba(15,50,65,.12)}
+label.q{display:block;font-weight:700;margin-bottom:8px}
+.search{width:100%;font:inherit;font-size:1.05rem;padding:14px 16px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.search:focus{outline:none;border-color:var(--brand)}
+fieldset{border:0;margin:18px 0 0;padding:0}
+legend{font-weight:700;margin-bottom:8px;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.chip span{display:inline-block;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.95rem}
+.chip input:checked+span{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);font-weight:700}
+.chip input:focus-visible+span{outline:3px solid var(--brand);outline-offset:2px}
+.status{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:22px 2px 10px;flex-wrap:wrap}
+.count{font-size:1.1rem}.count b{font-size:1.5rem;color:var(--brand)}
+.reset{font:inherit;background:none;border:1px solid var(--line);color:var(--ink);padding:6px 14px;border-radius:8px;cursor:pointer}
+.reset:hover{background:var(--soft)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-size:.9rem}
+tbody tr:last-child td{border-bottom:0}
+td.name{font-weight:700}
+td.num{font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.88rem;font-weight:700}
+.tag.ok{background:var(--okbg);color:var(--ok)}.tag.no{background:var(--nobg);color:var(--no)}
+mark{background:#ffe27a;color:#111;border-radius:3px;padding:0 1px}
+.empty{display:none;text-align:center;padding:40px 16px;background:var(--surface);border:1px dashed var(--line);border-radius:12px}
+.empty.show{display:block}
+footer{color:var(--muted);font-size:.85rem;padding-bottom:32px}
+@media(max-width:700px){
+ .wrap{padding:0 14px}.panel{padding:16px}
+ table,tbody,tr,td{display:block;width:100%}
+ thead{position:absolute;left:-9999px}
+ table{background:none;border:0}
+ tr{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:12px 14px}
+ td{border:0;padding:4px 0;display:flex;gap:12px;justify-content:space-between}
+ td::before{content:attr(data-label);color:var(--muted);flex:0 0 76px;font-size:.9rem}
+ td.name{font-size:1.1rem;display:block;padding-bottom:6px}td.name::before{display:none}
+ td>*:last-child,td{text-align:left}
+}
+@media(prefers-reduced-motion:no-preference){.chip span{transition:background .15s}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>민원서비스 찾기</h1>
+<p>서비스명을 검색하고 민원분야로 좁혀 보세요.</p>
+</div></header>
+<main class="wrap">
+<section class="panel" aria-label="검색 및 필터">
+<label class="q" for="q">서비스명 검색</label>
+<input id="q" class="search" type="search" placeholder="예: 여권, 등본, 신고" autocomplete="off">
+<fieldset><legend>민원분야</legend><div class="chips" id="chips"></div></fieldset>
+</section>
+<div class="status">
+<div class="count" role="status" aria-live="polite" id="count"></div>
+<button class="reset" id="reset" type="button">조건 초기화</button>
+</div>
+<table id="tbl"><thead><tr>
+<th>서비스명</th><th>소관기관</th><th>민원분야</th><th>온라인처리</th><th>처리기한</th><th>수수료</th>
+</tr></thead><tbody id="rows"></tbody></table>
+<div class="empty" id="empty"><p><b>조건에 맞는 서비스가 없습니다.</b><br>검색어를 줄이거나 민원분야를 '전체'로 바꿔 보세요.</p></div>
+</main>
+<div class="wrap"><footer>처리기한 0일은 '즉시', 수수료 0원은 '무료'로 표시합니다.</footer></div>
+<script>
+const DATA = [{"서비스ID": "S001", "서비스명": "주민등록등본 발급", "소관기관": "주민센터", "민원분야": "주민등록", "온라인처리": "가능", "처리기한일": 7, "수수료": 500}, {"서비스ID": "S002", "서비스명": "전입신고", "소관기관": "복지정책과", "민원분야": "주민등록", "온라인처리": "불가", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S003", "서비스명": "인감증명 발급", "소관기관": "복지정책과", "민원분야": "주민등록", "온라인처리": "가능", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S004", "서비스명": "주민등록증 재발급", "소관기관": "건축과", "민원분야": "주민등록", "온라인처리": "가능", "처리기한일": 0, "수수료": 0}, {"서비스ID": "S005", "서비스명": "건축물대장 발급", "소관기관": "구청 민원봉사과", "민원분야": "건축", "온라인처리": "불가", "처리기한일": 0, "수수료": 1000}, {"서비스ID": "S006", "서비스명": "건축허가 신청", "소관기관": "건축과", "민원분야": "건축", "온라인처리": "불가", "처리기한일": 1, "수수료": 2000}, {"서비스ID": "S007", "서비스명": "용도변경 신고", "소관기관": "시청 민원과", "민원분야": "건축", "온라인처리": "불가", "처리기한일": 0, "수수료": 0}, {"서비스ID": "S008", "서비스명": "지방세 납부확인서", "소관기관": "건축과", "민원분야": "세무", "온라인처리": "가능", "처리기한일": 1, "수수료": 1000}, {"서비스ID": "S009", "서비스명": "취득세 신고", "소관기관": "교통행정과", "민원분야": "세무", "온라인처리": "가능", "처리기한일": 0, "수수료": 0}, {"서비스ID": "S010", "서비스명": "재산세 조회", "소관기관": "교통행정과", "민원분야": "세무", "온라인처리": "가능", "처리기한일": 3, "수수료": 0}, {"서비스ID": "S011", "서비스명": "기초연금 신청", "소관기관": "건축과", "민원분야": "복지", "온라인처리": "가능", "처리기한일": 7, "수수료": 500}, {"서비스ID": "S012", "서비스명": "복지급여 조회", "소관기관": "시청 민원과", "민원분야": "복지", "온라인처리": "가능", "처리기한일": 14, "수수료": 5000}, {"서비스ID": "S013", "서비스명": "장애인 등록", "소관기관": "주민센터", "민원분야": "복지", "온라인처리": "가능", "처리기한일": 5, "수수료": 0}, {"서비스ID": "S014", "서비스명": "자동차 등록", "소관기관": "주민센터", "민원분야": "교통", "온라인처리": "가능", "처리기한일": 1, "수수료": 5000}, {"서비스ID": "S015", "서비스명": "운전면허 갱신", "소관기관": "교통행정과", "민원분야": "교통", "온라인처리": "불가", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S016", "서비스명": "주정차 위반 조회", "소관기관": "주민센터", "민원분야": "교통", "온라인처리": "가능", "처리기한일": 7, "수수료": 1000}, {"서비스ID": "S017", "서비스명": "배출시설 신고", "소관기관": "주민센터", "민원분야": "환경", "온라인처리": "가능", "처리기한일": 1, "수수료": 0}, {"서비스ID": "S018", "서비스명": "폐기물 처리 신청", "소관기관": "시청 민원과", "민원분야": "환경", "온라인처리": "가능", "처리기한일": 14, "수수료": 5000}, {"서비스ID": "S019", "서비스명": "식품영업 신고", "소관기관": "건축과", "민원분야": "위생", "온라인처리": "가능", "처리기한일": 3, "수수료": 2000}, {"서비스ID": "S020", "서비스명": "위생업소 조회", "소관기관": "시청 민원과", "민원분야": "위생", "온라인처리": "불가", "처리기한일": 7, "수수료": 500}, {"서비스ID": "S021", "서비스명": "여권 발급 신청", "소관기관": "건축과", "민원분야": "여권", "온라인처리": "가능", "처리기한일": 7, "수수료": 1000}, {"서비스ID": "S022", "서비스명": "여권 재발급", "소관기관": "교통행정과", "민원분야": "여권", "온라인처리": "가능", "처리기한일": 1, "수수료": 1000}];
+const $=id=>document.getElementById(id);
+const fields=['전체',...new Set(DATA.map(d=>d.민원분야))];
+let field='전체';
+$('chips').innerHTML=fields.map((f,i)=>{
+  const n=f==='전체'?DATA.length:DATA.filter(d=>d.민원분야===f).length;
+  return `<label class="chip"><input type="radio" name="f" value="${f}"${i?'':' checked'}><span>${f} ${n}</span></label>`}).join('');
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function hl(text,q){
+  if(!q) return esc(text);
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0) return esc(text);
+  return esc(text.slice(0,i))+'<mark>'+esc(text.slice(i,i+q.length))+'</mark>'+esc(text.slice(i+q.length));
+}
+function render(){
+  const q=$('q').value.trim();
+  const list=DATA.filter(d=>(field==='전체'||d.민원분야===field)&&d.서비스명.toLowerCase().includes(q.toLowerCase()));
+  $('rows').innerHTML=list.map(d=>`<tr>
+  <td class="name">${hl(d.서비스명,q)}</td>
+  <td data-label="소관기관">${esc(d.소관기관)}</td>
+  <td data-label="민원분야">${esc(d.민원분야)}</td>
+  <td data-label="온라인처리"><span class="tag ${d.온라인처리==='가능'?'ok':'no'}">${d.온라인처리}</span></td>
+  <td data-label="처리기한" class="num">${d.처리기한일===0?'즉시':d.처리기한일+'일'}</td>
+  <td data-label="수수료" class="num">${d.수수료===0?'무료':d.수수료.toLocaleString('ko-KR')+'원'}</td></tr>`).join('');
+  $('count').innerHTML=`전체 ${DATA.length}건 중 <b>${list.length}</b>건 표시`;
+  $('tbl').style.display=list.length?'':'none';
+  $('empty').classList.toggle('show',!list.length);
+}
+$('q').addEventListener('input',render);
+$('chips').addEventListener('change',e=>{field=e.target.value;render()});
+$('reset').addEventListener('click',()=>{$('q').value='';field='전체';document.querySelector('input[name=f][value="전체"]').checked=true;render();$('q').focus()});
+render();
+</script>
+</body>
+</html>
